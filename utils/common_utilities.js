@@ -1,5 +1,5 @@
-//middleware functions
-const userAuthenticated = function (req, res,next) {
+// middleware functions
+const userAuthenticated = function (req, res, next) {
     if (req.isAuthenticated()) {
         next();
     } else {
@@ -16,4 +16,3 @@ module.exports = {
     isAdmin,
     userAuthenticated
 };
-

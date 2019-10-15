@@ -1,13 +1,22 @@
-const { getAllPosts, getPostById, addPost, deletePost, updatePost } = require("../utils/utilities")
+const {
+    getAllPosts,
+    getPostById,
+    addPost,
+    deletePost,
+    updatePost
+} = require('../utils/post_utilities');
+const {
+    userAuthenticated
+} = require('../utils/common_utilities');
 
 
 const getPosts = function (req, res) {
     // execute the query from getAllPosts
-	getAllPosts(req)
-	.sort({
+    getAllPosts(req).
+    sort({
         modified_date: -1
-    })
-	.exec((err, posts) => {
+    }).
+    exec((err, posts) => {
         if (err) {
             res.status(500);
             res.json({
@@ -86,9 +95,8 @@ const changePost = function (req, res) {
 
 const verifyOwner = function (req, res, next) {
     // If post owner isn't currently logged in user, send forbidden
-    console.log(req.user.role)
-    console.log(req.user.username)
     if (req.user.role === 'admin') {
+        console.log('have admin user in middleware')
         next();
     } else {
         getPostById(req).exec((err, post) => {
@@ -99,9 +107,6 @@ const verifyOwner = function (req, res, next) {
                 }
                 next();
             }
-            // console.log(post);
-            // console.log("user: " +req.user.username);
-            // console.log("post: "+post.username);
             if (req.user.username !== post.username) {
                 req.error = {
                     message: 'You do not have permission to modify this post',
@@ -113,14 +118,23 @@ const verifyOwner = function (req, res, next) {
     }
 }
 
-
-
+const validUser = function (req, res, next) {
+    // If user is blocked, send back an error
+    if (req.user.blocked) {
+        req.error = {
+            message: 'User is blocked',
+            status: 403
+        };
+    }
+    next();
+}
 
 module.exports = {
-	getPosts,
+    getPosts,
     getPost,
     makePost,
-    removePost, 
+    removePost,
     changePost,
-    verifyOwner
-}
+    verifyOwner,
+    validUser
+};

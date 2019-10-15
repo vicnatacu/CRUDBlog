@@ -11,7 +11,7 @@ const authRouter = require('./routes/auth_routes');
 const userRouter = require('./routes/user_routes');
 
 
-const port = 3007
+const port = process.env.PORT || 3007;
 
 const app = express()
 app.use(cors())
@@ -19,7 +19,8 @@ app.use(bodyParser.json())
 
 
 
-const dbConn = "mongodb://localhost/blog_app"
+const dbConn = process.env.MONGODB_URI || "mongodb://localhost/blog_app"
+// const dbConn = "mongodb+srv://vicnatacu:krambear36@vicnatacu-ra5zk.mongodb.net/blog_app?retryWrites=true&w=majority"
 // Set three properties to avoid deprecation warnings:
 // useNewUrlParser: true
 // useUnifiedTopology: true

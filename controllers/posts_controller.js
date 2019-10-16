@@ -3,7 +3,11 @@ const {
     getPostById,
     addPost,
     deletePost,
-    updatePost
+    updatePost,
+    addComment,
+    getComments,
+    deleteComment
+
 } = require('../utils/post_utilities');
 const {
     userAuthenticated
@@ -38,6 +42,18 @@ const getPost = function (req, res) {
     });
 };
 
+const getCommentsFromPost = function (req, res) {
+    if(req.error) {
+        res.status(req.error.status)
+        res.send(req.error.message)
+    } else {
+        getComments(req).then(( post) => {
+            res.status(200)
+            res.send(post);
+        });
+    }
+    
+}
 const makePost = function (req, res) {
     // add the username from req.user
     req.body.username = req.user.username;
@@ -107,9 +123,39 @@ const verifyOwner = function (req, res, next) {
                 }
                 next();
             }
+            console.log("user: "+req.user.username)
+            console.log("post user: "+ post.username)
             if (req.user.username !== post.username) {
                 req.error = {
                     message: 'You do not have permission to modify this post',
+                    status: 403
+                };
+            }
+            next();
+        });
+    }
+}
+
+const verifyCommentOwner = function (req, res, next) {
+    if (req.user.role === 'admin') {
+        console.log('have admin user in middleware')
+        next();
+    } else {
+        let post = Post.findOne({
+            "comments._id": req.params.id
+        }).exec((err, post) => {
+            if (err) {
+                req.error = {
+                    message: 'Post not found',
+                    status: 404
+                }
+                next();
+            }
+            console.log("post:", post)
+            let comment = post.comments.id(req.params.id);
+            if (req.user.username !== comment.username) {
+                req.error = {
+                    message: 'You do not have permission to modify this comment',
                     status: 403
                 };
             }
@@ -129,6 +175,48 @@ const validUser = function (req, res, next) {
     next();
 }
 
+// make a comment on a post
+const makeComment = function (req, res) {
+    // Check for error from middleware
+    if (req.error) {
+        res.status(req.error.status);
+        res.send(req.error.message);
+    } else {
+        // resolve the promise from addComment
+        // Add username to the request from the session
+        req.body.username = req.user.username;
+        addComment(req).then((post) => {
+            res.status(200);
+            res.send(post);
+        }).catch((err) => {
+            res.status(500);
+            res.json({
+                error: err.message
+            });
+        });
+    }
+}
+
+const removeComment = function (req, res) {
+    // Check for error from middleware
+    if (req.error) {
+        res.status(req.error.status);
+        res.send(req.error.message);
+    } else {
+        deleteComment(req).then(() => {
+            res.sendStatus(204);
+        }).catch((err) => {
+
+            res.status(500);
+            res.json({
+                error: err.message
+            });
+
+
+        })
+    }
+}
+
 module.exports = {
     getPosts,
     getPost,
@@ -136,5 +224,10 @@ module.exports = {
     removePost,
     changePost,
     verifyOwner,
-    validUser
+    validUser,
+    makeComment,
+    getCommentsFromPost,
+    removeComment,
+    verifyCommentOwner
+    
 };

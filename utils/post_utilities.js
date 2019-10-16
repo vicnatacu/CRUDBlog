@@ -5,9 +5,12 @@ const Post = require("../models/post")
 
 // get all posts
 // return a query
-const getAllPosts = function(req) {
-	return Post.find()
-}
+const getAllPosts = function (req) {
+    // If we're passed a category in the query, filter on that category
+    if (req.query.category) return Post.findByCategory(req.query.category);
+    else if (req.query.username) return Post.findByUsername(req.query.username);
+    else return Post.find();
+};
 
 // const getAllPosts = function(req) {
 // 	return blogPosts
@@ -19,6 +22,10 @@ const getPostById = function(req) {
 	return Post.findById(req.params.id)
 }
 
+const getComments = async function (req) {
+    let post = await Post.findById(req.params.postId)
+    return post.comments
+}
 
 // add post
 // returns a new Post object
@@ -36,6 +43,20 @@ const deletePost = function(id) {
 	return Post.findByIdAndRemove(id)
 }
 
+const deleteComment = async function (req) {
+    return await Post.findOneAndUpdate({
+        "comments._id": req.params.id
+    }, {
+        $pull: {
+            comments: {
+                _id: req.params.id
+            }
+        }
+    }, {
+        new: true
+    });
+}
+
 // update post
 // returns a query
 const updatePost = function (req) {
@@ -45,6 +66,21 @@ const updatePost = function (req) {
         new: true
     });
 };
+
+// Add a comment to a post
+// returns a promise (because it is async)
+const addComment = async function (req) {
+    let post = await Post.findById(req.params.postId);
+
+    let newComment = {
+        username: req.body.username,
+        comment: req.body.comment
+    };
+    post.comments.push(newComment);
+    return Post.findByIdAndUpdate(req.params.postId, post, {
+        new: true
+    });
+}
 
 function filter(queryParams) {
     let filteredPosts = [];
@@ -70,5 +106,8 @@ module.exports = {
     getPostById,
     addPost,
     deletePost,
-    updatePost
+    updatePost,
+    addComment,
+    getComments,
+    deleteComment,
 }

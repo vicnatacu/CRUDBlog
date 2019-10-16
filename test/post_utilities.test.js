@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 const expect = require('expect');
-const utilities = require('../utils/utilities');
+const utilities = require('../utils/post_utilities');
 const Post = require('../models/post');
 
 
@@ -167,3 +167,83 @@ function setupData() {
 function tearDownData() {
     return Post.deleteMany();
 }
+
+// addComment
+describe('addComment', (done) => {
+    it('should add a comment to a post', (done) => {
+        const req = {
+            params: {
+                postId: postId
+            },
+            body: {
+                username: 'tester2',
+                comment: 'This is a comment on the post'
+            }
+        };
+        utilities.addComment(req).then((post) => {
+            expect(post.comments.length).toBe(1);
+            expect(post.comments[0].username).toBe('tester2');
+            done();
+        })
+    });
+});
+
+// Using findByCategory when there is a post in the category
+describe('get all posts for a particular category', (done) => {
+    it('should return a post if it is in the given category', function (done) {
+        // Add a post for a category 'code'
+        const date = Date.now();
+        const req = {
+            body: {
+                title: "A categorised post",
+                username: "tester",
+                content: "This is about code!",
+                category: "code",
+                create_date: date,
+                modified_date: date
+            }
+        };
+        Post.create(req.body).then(() => {
+            utilities.getAllPosts({
+                query: {
+                    category: 'code'
+                }
+            }).exec((err, posts) => {
+                // Expect to only get the post we just added with the 'code' category - not the one from setup
+                expect(Object.keys(posts).length).toBe(1);
+                expect(posts[0].category).toBe('code');
+                done();
+            });
+        });
+
+    });
+});
+
+// Using findByCategory when there is no post in the category
+describe('get all posts by category with no posts in category', (done) => {
+    it('should return no posts if category not found', function (done) {
+        // Add a post for a category 'code'
+        const date = Date.now();
+        const req = {
+            body: {
+                title: "A categorised post",
+                username: "tester",
+                content: "This is about code!",
+                category: "code",
+                create_date: date,
+                modified_date: date
+            }
+        };
+        Post.create(req.body).then(() => {
+            utilities.getAllPosts({
+                query: {
+                    category: 'books'
+                }
+            }).exec((err, posts) => {
+                // Expect to get no posts at all
+                expect(Object.keys(posts).length).toBe(0);
+                done();
+            });
+        });
+    });
+});

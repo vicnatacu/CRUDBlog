@@ -10,11 +10,11 @@ const postRouter = require('./routes/posts_routes');
 const authRouter = require('./routes/auth_routes');
 const userRouter = require('./routes/users_routes');
 
-const port = 3000;
+const port = process.env.PORT || 3000;
 
 const app = express();
 
-const dbConn = 'mongodb://localhost/blog_app'
+const dbConn = process.env.MONGODB_URI || 'mongodb://localhost/blog_app'
 // Set three properties to avoid deprecation warnings:
 // useNewUrlParser: true
 // useUnifiedTopology: true
